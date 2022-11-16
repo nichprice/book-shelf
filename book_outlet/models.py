@@ -5,12 +5,26 @@ from django.utils.text import slugify
 
 # Create your models here.
 
-class Address(models.model):
-    
+class Address(models.Model):
+    street = models.CharField(max_length=80)
+    city = models.CharField(max_length=50)
+    postal_code = models.CharField(max_length=5)
+
+    def full_address(self):
+        return f"{self.street}, {self.city}, {self.postal_code}"
+     
+    def __str__(self):
+        return self.full_address()
+
+    class Meta:
+        verbose_name_plural = "Addresses"
 
 class Author(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
+    address = models.OneToOneField(
+        Address, on_delete=models.CASCADE, null=True
+        )
 
     def full_name(self):
         return f"{self.first_name} {self.last_name}" 
@@ -18,11 +32,14 @@ class Author(models.Model):
     def __str__(self):
         return self.full_name()
 
+
 class Book(models.Model):
     title = models.CharField(max_length=50)
     rating = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)])
-    author = models.ForeignKey(Author, on_delete=models.CASCADE, null=True, related_name='books')
+    author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, null=True, related_name='books'
+        )
     is_bestselling = models.BooleanField(default=False)
     # Harry Potter 1 => harry-potter-1
     slug = models.SlugField(default="", null=False, db_index=True) 
@@ -30,6 +47,7 @@ class Book(models.Model):
     def get_absolute_url(self):
         return reverse("book_detail", args=[self.slug])
     
+
 
     def __str__(self):
         return f"{self.title} ({self.rating})"
